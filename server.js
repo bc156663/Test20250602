@@ -380,23 +380,25 @@ app.get('/kreditBeantragen', (req, res) => {
 // Kommentar: 
 app.post('/kreditBeantragen', (req, res) => {
 
-	// Kommentar:
+	// Kommentar: Die vom Kunden eingegebenen Werte für Betrag, Laufzeit und Zinssatz
+	// werden aus dem body der Anfrage (req) ausgelesen und in lokalen Variablen gespeichert.
 	let zinsbetrag = req.body.Betrag;
 	let laufzeit = req.body.Laufzeit;
 	let zinssatz = req.body.Zinssatz;
 
-	// Kommentar:
+	// Kommentar: Der Rückzahlungsbetrag wird mit der Formel berechnet und in der Variablen 'kredit' gespeichert.
 	let kredit = zinsbetrag * Math.pow(1+zinssatz/100,laufzeit);
 	
-	// Kommentar:
+	// Kommentar: Der berechnete Rückzahlungsbetrag wird in der Konsole ausgegeben zur Kontrolle
 	console.log("Rückzahlungsbetrag: " + kredit + " €.")
 
-	// Kommentar:
+	// Kommentar: Die Seite 'kreditBeantragen.ejs' wird gerendert und die Variablen Laufzeit, Zinssatz, Betrag und Meldung
+	// werden an die EJS-Seite übergeben. Die Variablen können in der EJS-Seite verwendet werden.
 	res.render('kreditBeantragen.ejs',{
 		Laufzeit: laufzeit,
 		Zinssatz: zinssatz,		
 		Betrag: zinsbetrag,
-		// Kommentar:
+		// Kommentar: Die Meldung enthält den berechneten Rückzahlungsbetrag, der dem Kunden angezeigt wird
 		Meldung: "Rückzahlungsbetrag: " + kredit + " €."
 	});
 });
@@ -415,6 +417,108 @@ app.get('/ueberweisungAusfuehren', (req, res) => {
 			Meldung: "Melden Sie sich zuerst an."
 		});
 	}
+});
+
+app.post('/profil', (req, res) => {
+    
+    var meldung = "";
+
+    if(kunde.IstEingeloggt){
+
+        let email = req.body.Email;
+
+        // Prüfen, ob die E-Mail-Adresse mit ".de" endet
+        if (!email.endsWith(".de")) {
+            meldung = "Bitte geben Sie eine gültige deutsche E-Mail-Adresse mit der Endung .de an.";
+        } else if (validator.validate(email)) {
+            console.log("Gültige EMail.")
+            meldung = "E-Mail-Adresse wurde erfolgreich geändert.";
+            kunde.Mail = email;
+        } else {
+            console.log("Ungültige EMail.")
+            meldung = "Die eingegebene E-Mail-Adresse ist ungültig.";
+        }
+        
+        // Alle Kundendaten an die Profilseite übergeben
+        res.render('profil.ejs',{
+            Meldung: meldung,
+            Email: kunde.Mail,
+            Name: kunde.Name,
+            Vorname: kunde.Vorname,
+            Geburtsdatum: kunde.Geburtsdatum
+        });
+
+    }else{
+        res.render('login.ejs',{
+            Meldung: "Melden Sie sich zuerst an."
+        });
+    }
+});
+let kunde = {
+    Name: "Mustermann",
+    Vorname: "Max",
+    Geburtsdatum: "01.01.1990",
+    Mail: "max.mustermann@beispiel.de",
+    Telefonnummer: "0123456789", // <-- Neue Eigenschaft hinzugefügt
+    IstEingeloggt: false
+};
+
+// ...existierender Code...
+
+app.get('/profil', (req, res) => {
+    
+    if(kunde.IstEingeloggt){
+        res.render('profil.ejs',{
+            Meldung: "",
+            Email: kunde.Mail,
+            Name: kunde.Name,
+            Vorname: kunde.Vorname,
+            Geburtsdatum: kunde.Geburtsdatum,
+            Telefonnummer: kunde.Telefonnummer // Telefonnummer an die View übergeben
+        });
+    }else{
+        res.render('login.ejs',{
+            Meldung: "Melden Sie sich zuerst an."
+        });
+    }
+});
+
+app.post('/profil', (req, res) => {
+    
+    var meldung = "";
+
+    if(kunde.IstEingeloggt){
+
+        let email = req.body.Email;
+        let telefonnummer = req.body.Telefonnummer; // Telefonnummer aus dem Formular holen
+
+        // Prüfen, ob die E-Mail-Adresse mit ".de" endet
+        if (!email.endsWith(".de")) {
+            meldung = "Bitte geben Sie eine gültige deutsche E-Mail-Adresse mit der Endung .de an.";
+        } else if (validator.validate(email)) {
+            kunde.Mail = email;
+            meldung = "E-Mail-Adresse wurde erfolgreich geändert.";
+        } else {
+            meldung = "Die eingegebene E-Mail-Adresse ist ungültig.";
+        }
+
+        // Telefonnummer aktualisieren (hier ggf. noch Validierung ergänzen)
+        kunde.Telefonnummer = telefonnummer;
+
+        res.render('profil.ejs',{
+            Meldung: meldung,
+            Email: kunde.Mail,
+            Name: kunde.Name,
+            Vorname: kunde.Vorname,
+            Geburtsdatum: kunde.Geburtsdatum,
+            Telefonnummer: kunde.Telefonnummer
+        });
+
+    }else{
+        res.render('login.ejs',{
+            Meldung: "Melden Sie sich zuerst an."
+        });
+    }
 });
 
 // Die Funktion app.get('/geldAnlegen...) wird abgearbeitet, wenn der Benutzer die Seite geldAnlegen
